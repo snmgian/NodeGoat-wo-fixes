@@ -14,4 +14,4 @@ jobs:
       - env:
           EVENT_CONTEXT: ${{ toJSON(github.event) }}
         run: |
-          echo $EVENT_CONTEXT
+          echo $EVENT_CONTEXT | jq '.'
