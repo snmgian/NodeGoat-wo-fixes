@@ -14,6 +14,6 @@ jobs:
       - env:
           EVENT_CONTEXT: ${{ toJSON(github.event) }}
         run: |
-          echo $EVENT_CONTEXT | jq '.'
-          python owasp-agent-client/main.py
+          # echo $EVENT_CONTEXT | jq '.'
+          python ${{ github.workspace }}/owasp-agent-client/main.py
 
