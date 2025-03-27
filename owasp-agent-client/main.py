@@ -11,6 +11,8 @@ def build_test_issue():
 
 def extract_issue(event_context):
     data = json.loads(event_context)
+    from pprint import pprint
+    pprint(data)
     issue_id = data["issue"]["id"]
     issue_title = data["issue"]["title"]
     issue_body = data["issue"]["body"]
