@@ -21,3 +21,7 @@ jobs:
           ls -lah ${{ github.workspace }}/owasp-agent-client
           echo "."
           cat ${{ github.workspace }}/owasp-agent-client/main.py
+      - env:
+          EVENT_CONTEXT: ${{ toJSON(github.event) }}
+        run: |
+          python ${{ github.workspace }}/owasp-agent-client/main.py
