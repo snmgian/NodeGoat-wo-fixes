@@ -3,19 +3,15 @@ import json
 import os
 import uuid
 
-# LANGGRAPH_SERVER_URL = 'http://127.0.0.1:2024'
-LANGGRAPH_SERVER_URL = 'https://2830-2a09-bac0-1000-307-00-2c-da.ngrok-free.app'
+DEFAULT_LANGGRAPH_SERVER_URL = 'http://127.0.0.1:2024'
 
 def build_test_issue():
     return { "issue_id": 0, "issue_title": "OWASP Test Issue", "issue_body": "OWASP Test Issue Body"}
 
 def extract_issue(event_context):
-    data = json.loads(event_context)
-    from pprint import pprint
-    pprint(data)
-    issue_id = data["issue"]["id"]
-    issue_title = data["issue"]["title"]
-    issue_body = data["issue"]["body"]
+    issue_id = event_context["issue"]["id"]
+    issue_title = event_context["issue"]["title"]
+    issue_body = event_context["issue"]["body"]
 
     return {
         "issue_id": issue_id,
@@ -23,9 +19,14 @@ def extract_issue(event_context):
         "issue_body": issue_body,
     }
 
-def make_request(issue_data):
+def get_langgraph_server_url(event_context, repository_vars):
+    issue_user_login = event_context["issue"]["user"]["login"]
+    langgraph_server_url_var = f"LANGGRAPH_SERVER_URL_{issue_user_login.upper()}"
+    return repository_vars.get(langgraph_server_url_var, DEFAULT_LANGGRAPH_SERVER_URL)
+
+def make_request(issue_data, langgraph_server_url):
     thread_id = str(uuid.uuid4())
-    url = f"{LANGGRAPH_SERVER_URL}/threads/{thread_id}/runs"
+    url = f"{langgraph_server_url}/threads/{thread_id}/runs"
 
     req = request.Request(url, method="POST")
     req.add_header('Content-Type', 'application/json')
@@ -54,17 +55,22 @@ def make_request(issue_data):
     data = json.dumps(langgraph_payload)
     data = data.encode()
 
-    r = request.urlopen(req, data=data)
-    content = r.read()
+    response = request.urlopen(req, data=data)
+    content = response.read()
     print(content)
 
+def main():
+    event_context = json.loads(os.environ.get('EVENT_CONTEXT', "{}"))
+    repository_vars = json.loads(os.environ.get('REPOSITORY_VARS', "{}"))
 
-event_context = os.environ.get('EVENT_CONTEXT', None)
-if event_context:
-    issue_data = extract_issue(event_context)
-else:
-    issue_data = build_test_issue()
+    if event_context:
+        issue_data = extract_issue(event_context)
+    else:
+        issue_data = build_test_issue()
 
-make_request(issue_data)
+    langgraph_server_url = get_langgraph_server_url(event_context, repository_vars)
 
+    make_request(issue_data, langgraph_server_url)
 
+if __name__ == "__main__":
+    main()
